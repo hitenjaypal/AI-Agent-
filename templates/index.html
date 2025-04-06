@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>re
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analyze Image Application</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-300 font-sans">
+  <div class="container mx-auto p-6">
+    <!-- Header -->
+    <div class="flex items-center justify-center mb-12">
+      <i class="fas fa-camera text-6xl text-gray-400 mr-4 animate-pulse"></i>
+      <h1 class="text-4xl font-bold text-purple-300 shadow-md">🧬 Cognize
+        “See. Ask. Understand.”
+
+
+      </h1>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <!-- Upload Image Card -->
+      <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20">
+        <h2 class="text-xl font-semibold text-purple-400 mb-4">📤 Upload Image</h2>
+        <button id="upload-btn"
+          class="w-full py-3 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-md transition-all">
+          📸 Click to Upload
+        </button>
+        <input type="file" id="image-upload" accept="image/*" class="hidden" />
+        <div id="image-container" class="hidden mt-4">
+          <img id="display-image" src="" alt="Uploaded image" class="w-full rounded-lg shadow-lg" />
+        </div>
+      </div>
+
+
+      <!-- Ask Question Card -->
+      <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20">
+        <h2 class="text-xl font-semibold text-blue-400 mb-4">💬 Ask Question</h2>
+        <textarea id="query-input" rows="4" placeholder="Enter your question about the image"
+          class="w-full p-3 bg-gray-800 text-gray-300 rounded-lg shadow"></textarea>
+        <div class="mt-4">
+          <label for="explain-mode" class="text-sm text-gray-300 block mb-1">🧠 Explanation Style:</label>
+          <select id="explain-mode" class="w-full p-2 bg-gray-800 text-white rounded">
+            <option value="">Normal</option>
+            <option value="eli5">👶 Explain Like I'm 5 (ELI5)</option>
+            <option value="doctor">👩‍⚕️ Explain Like a Doctor</option>
+            <option value="teacher">🧑‍🏫 Explain Like a Teacher</option>
+            <option value="student">🎓 Explain Like a Student</option>
+            <option value="support">💬 Explain Like Customer Support</option>
+          </select>
+        </div>
+
+
+        <div class="flex justify-between items-center mt-2">
+          <button id="mic-btn" class="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded-lg">
+            🎙️ Speak
+          </button>
+          <button id="submit-query"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-all">
+            🚀 Submit Query
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Voice Control Panel -->
+    <div class="flex flex-wrap justify-center items-center gap-4 mb-8">
+      <div>
+        <label class="text-sm">🌐 Language:</label>
+        <select id="language-select" class="bg-gray-700 text-white p-2 rounded">
+          <option value="en-US">English (US)</option>
+          <option value="en-GB">English (UK)</option>
+          <option value="hi-IN">Hindi (India)</option>
+          <option value="es-ES">Spanish</option>
+          <option value="fr-FR">French</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-sm">🗣️ Voice:</label>
+        <select id="voice-select" class="bg-gray-700 text-white p-2 rounded">
+          <option>Loading voices...</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Model Responses -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Llama Response -->
+      <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-xl font-semibold text-green-400">🤖 Llama-3.2-11b-vision Response</h2>
+          <div class="flex gap-2">
+            <button onclick="speakResponse('llama')"
+              class="text-sm bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-lg">🔊 Listen</button>
+            <button onclick="stopSpeaking()"
+              class="text-sm bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-lg">⛔ Stop</button>
+          </div>
+        </div>
+        <div id="response-container-llama" class="hidden mt-4 bg-gray-800 p-4 rounded text-gray-300 animate__animated">
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button onclick="vote('llama')"
+            class="text-sm bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded-lg">👍 Vote Llama</button>
+        </div>
+      </div>
+
+      <!-- Llava Response -->
+      <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-xl font-semibold text-green-400">🤖 Llama-3.2-90b-vision Response</h2>
+          <div class="flex gap-2">
+            <button onclick="speakResponse('llava')"
+              class="text-sm bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-lg">🔊 Listen</button>
+            <button onclick="stopSpeaking()"
+              class="text-sm bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-lg">⛔ Stop</button>
+          </div>
+        </div>
+        <div id="response-container-llava" class="hidden mt-4 bg-gray-800 p-4 rounded text-gray-300 animate__animated">
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button onclick="vote('llava')"
+            class="text-sm bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded-lg">👍 Vote Llava</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Chat + View -->
+    <div class="mt-6 text-center">
+
+      <button onclick="saveChat()" class="bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-6 rounded-lg font-semibold">
+        💾 Save This Chat
+      </button>
+      <button onclick="fetchSessionChat()" class="ml-4 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded">
+        📜 View This Session's Chat
+      </button>
+
+    </div>
+
+    <!-- Error Message -->
+    <div id="error-container" class="hidden mt-8 p-4 bg-red-500 text-white rounded">
+      <p id="error-text"></p>
+    </div>
+  </div>
+
+  <script>
+    let voices = [];
+
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
+      const voiceSelect = document.getElementById("voice-select");
+      voiceSelect.innerHTML = "";
+
+      voices.forEach((voice, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+      });
+    }
+
+    speechSynthesis.onvoiceschanged = loadVoices;
+
+    function stopSpeaking() {
+      speechSynthesis.cancel();
+    }
+
+    function speakResponse(model) {
+      stopSpeaking();
+      const content = model === 'llama'
+        ? document.getElementById('response-container-llama').innerText
+        : document.getElementById('response-container-llava').innerText;
+
+      const utterance = new SpeechSynthesisUtterance(content);
+      const selectedLang = document.getElementById("language-select").value;
+      const selectedVoiceIndex = document.getElementById("voice-select").value;
+
+      utterance.lang = selectedLang;
+      if (voices[selectedVoiceIndex]) {
+        utterance.voice = voices[selectedVoiceIndex];
+      }
+
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      speechSynthesis.speak(utterance);
+    }
+    async function fetchSessionChat() {
+      try {
+        const res = await fetch('/get_chat_history');
+        const history = await res.json();
+        console.log("📜 Session Chat History:", history);
+        alert("📜 Session chat history printed to console!");
+      } catch (err) {
+        console.error('Error fetching chat history:', err);
+        alert("❌ Failed to load session chat history");
+      }
+    }
+
+
+    function vote(model) {
+      alert(`✅ Thanks for voting for ${model.toUpperCase()}!`);
+      localStorage.setItem(`vote_${model}`, (parseInt(localStorage.getItem(`vote_${model}`)) || 0) + 1);
+    }
+
+    function saveChat() {
+      const query = document.getElementById('query-input').value;
+      const llamaResponse = document.getElementById('response-container-llama').innerText;
+      const llavaResponse = document.getElementById('response-container-llava').innerText;
+      const timestamp = new Date().toLocaleString();
+
+      let textContent = `🕒 Chat Timestamp: ${timestamp}\n`;
+      textContent += `\n🧠 Query:\n${query}`;
+      textContent += `\n\n🤖 Llama-3.2-11b-vision Response:\n${llamaResponse}`;
+      textContent += `\n\n🤖 Llama-3.2-90b-vision Response:\n${llavaResponse}`;
+
+      const blob = new Blob([textContent], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `chat_${Date.now()}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      const imageSrc = document.getElementById('display-image').src;
+      const chat = { timestamp, query, llamaResponse, llavaResponse, imageSrc };
+      const existingChats = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+      existingChats.push(chat);
+      localStorage.setItem('chatHistory', JSON.stringify(existingChats));
+
+      alert("💾 Chat saved and downloaded as .txt file!");
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const uploadBtn = document.getElementById('upload-btn');
+      const imageUpload = document.getElementById('image-upload');
+      const displayImage = document.getElementById('display-image');
+      const imageContainer = document.getElementById('image-container');
+      const queryInput = document.getElementById('query-input');
+      const submitQuery = document.getElementById('submit-query');
+      const micBtn = document.getElementById('mic-btn');
+      const responseLlama = document.getElementById('response-container-llama');
+      const responseLlava = document.getElementById('response-container-llava');
+      const errorContainer = document.getElementById('error-container');
+      const errorText = document.getElementById('error-text');
+
+      uploadBtn.addEventListener('click', () => imageUpload.click());
+
+      imageUpload.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            displayImage.src = e.target.result;
+            imageContainer.classList.remove('hidden');
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      micBtn.addEventListener('click', () => {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.start();
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          queryInput.value = transcript;
+        };
+
+        recognition.onerror = (event) => {
+          alert('Speech recognition error: ' + event.error);
+        };
+      });
+
+      submitQuery.addEventListener('click', async () => {
+        const image = imageUpload.files[0];
+        let query = queryInput.value.trim();
+        const explainMode = document.getElementById('explain-mode').value;
+
+        if (!image) return showError('⚠️ Please upload an image first');
+        if (!query) return showError('⚠️ Please enter your question');
+        if (explainMode === 'eli5') {
+          query += "\n\nPlease explain this as if I were a 5-year-old, using very simple language, emojis, and fun analogies.";
+        } else if (explainMode === 'doctor') {
+          query += "\n\nPlease explain this like a medical doctor would explain to a patient.";
+        } else if (explainMode === 'teacher') {
+          query += "\n\nPlease explain this like a school teacher would explain to a class.";
+        } else if (explainMode === 'student') {
+          query += "\n\nPlease explain this as if you were a student giving a presentation.";
+        } else if (explainMode === 'support') {
+          query += "\n\nPlease explain this like a helpful customer support representative addressing a concern.";
+        }
+
+        const formData = new FormData();
+        formData.append('image', image);
+        formData.append('query', query);
+
+        try {
+          submitQuery.disabled = true;
+          submitQuery.textContent = 'Processing... ⏳';
+
+          responseLlama.classList.add('hidden');
+          responseLlava.classList.add('hidden');
+          errorContainer.classList.add('hidden');
+          const response = await fetch('/upload_and_query', {
+            method: 'POST',
+            body: formData
+          });
+
+          const result = await response.json();
+          if (!response.ok || result.error) throw new Error(result.detail || result.error || 'Server error');
+
+          responseLlama.innerHTML = marked.parse(result.llama || 'No response');
+          responseLlava.innerHTML = marked.parse(result.llava || 'No response');
+
+          if (result.llama_eli5) {
+            const eli5ContainerLlama = document.createElement('div');
+            eli5ContainerLlama.classList.add('mt-4', 'p-4', 'bg-gray-700', 'rounded');
+            eli5ContainerLlama.innerHTML = `<h3 class="text-lg font-semibold text-yellow-400">👶 ELI5 Explanation:</h3>${marked.parse(result.llama_eli5)}`;
+            responseLlama.appendChild(eli5ContainerLlama);
+          }
+
+          if (result.llava_eli5) {
+            const eli5ContainerLlava = document.createElement('div');
+            eli5ContainerLlava.classList.add('mt-4', 'p-4', 'bg-gray-700', 'rounded');
+            eli5ContainerLlava.innerHTML = `<h3 class="text-lg font-semibold text-yellow-400">👶 ELI5 Explanation:</h3>${marked.parse(result.llava_eli5)}`;
+            responseLlava.appendChild(eli5ContainerLlava);
+          }
+
+          responseLlama.classList.remove('hidden');
+          responseLlava.classList.remove('hidden');
+
+
+        } catch (error) {
+          console.error('Error:', error);
+          showError(error.message);
+        } finally {
+          submitQuery.disabled = false;
+          submitQuery.textContent = '🚀 Submit Query';
+        }
+      });
+
+
+      function showError(message) {
+        errorText.textContent = message;
+        errorContainer.classList.remove('hidden');
+      }
+
+      loadVoices();
+    });
+  </script>
+
+</body>
+
+</html>
