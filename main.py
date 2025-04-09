@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import os
 import logging
 
-# LibreTranslate endpoint (public demo, or host your own)
 TRANSLATE_API = "https://libretranslate.de"
 
 logging.basicConfig(level=logging.INFO)
@@ -20,7 +19,21 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY is not set in .env file")
 
-# 🔄 Translation function
+def detect_language(text):
+    try:
+        response = requests.post(
+            f"{TRANSLATE_API}/detect",
+            headers={"Content-Type": "application/json"},
+            json={"q": text}
+        )
+        detections = response.json()
+        if detections and isinstance(detections, list):
+            return detections[0]['language']
+        return "en"
+    except Exception as e:
+        logger.warning(f"Language detection failed: {e}")
+        return "en"
+
 def translate_text(text, source_lang="auto", target_lang="en"):
     try:
         response = requests.post(
@@ -37,16 +50,15 @@ def translate_text(text, source_lang="auto", target_lang="en"):
         return result["translatedText"]
     except Exception as e:
         logger.error(f"Translation error: {e}")
-        return text  # Fallback: return original
+        return text  
 
-# 🧠 Main function with image & multilingual support
 def process_image(image_path, query, history=None):
     try:
-        # Step 1: Detect and translate query to English
-        original_query_lang = "auto"
-        translated_query = translate_text(query, source_lang="auto", target_lang="en")
+        original_query_lang = detect_language(query)
+        logger.info(f"Detected user language: {original_query_lang}")
+        
+        translated_query = translate_text(query, source_lang=original_query_lang, target_lang="en")
 
-        # Step 2: Read and encode image
         abs_path = os.path.abspath(image_path)
         logger.info(f"Processing image: {abs_path}")
         
@@ -54,7 +66,6 @@ def process_image(image_path, query, history=None):
             image_content = f.read()
             encoded_image = base64.b64encode(image_content).decode("utf-8")
 
-        # Step 3: Verify image validity
         try:
             img = Image.open(io.BytesIO(image_content))
             img.verify()
@@ -62,7 +73,6 @@ def process_image(image_path, query, history=None):
             logger.error(f"Invalid image: {str(e)}")
             return {"error": f"Invalid image: {str(e)}"}
 
-        # Step 4: Prepare conversation history
         messages = history if history else []
         messages.append({
             "role": "user",
@@ -72,7 +82,6 @@ def process_image(image_path, query, history=None):
             ]
         })
 
-        # Step 5: AI API call
         def make_api_request(model):
             response = requests.post(
                 GROQ_API_URL,
@@ -89,7 +98,6 @@ def process_image(image_path, query, history=None):
             )
             return response
 
-        # Step 6: Get response from both models
         llama_response = make_api_request("llama-3.2-11b-vision-preview")
         llava_response = make_api_request("llama-3.2-90b-vision-preview")
 
@@ -99,11 +107,10 @@ def process_image(image_path, query, history=None):
                 result = response.json()
                 content_en = result["choices"][0]["message"]["content"]
 
-                # Step 7: Translate back to user's language
-                content_translated = translate_text(content_en, source_lang="en", target_lang="auto")
+                logger.info(f"Translating {model}'s response back to {original_query_lang}")
+                content_translated = translate_text(content_en, source_lang="en", target_lang=original_query_lang)
                 responses[model] = content_translated
 
-                # Step 8: Add AI's English response to context (for internal memory)
                 messages.append({
                     "role": "assistant",
                     "content": [{"type": "text", "text": content_en}]
@@ -112,7 +119,6 @@ def process_image(image_path, query, history=None):
                 logger.error(f"API error ({model}): {response.status_code}")
                 responses[model] = f"API error: {response.status_code}"
 
-        # Step 9: Return responses in user's language
         return {
             "llama": responses["llama"],
             "llava": responses["llava"],
