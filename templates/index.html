@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 
-<head>re
+<head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Analyze Image Application</title>
+  <title>🧠 Multipurpose AI Chatbot – Image + Query Powered Assistant</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -12,7 +12,7 @@
 
 <body class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-300 font-sans">
   <div class="container mx-auto p-6">
-    <!-- Header -->
+
     <div class="flex items-center justify-center mb-12">
       <i class="fas fa-camera text-6xl text-gray-400 mr-4 animate-pulse"></i>
       <h1 class="text-4xl font-bold text-purple-300 shadow-md">🧬 Cognize
@@ -23,7 +23,7 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      <!-- Upload Image Card -->
+
       <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20">
         <h2 class="text-xl font-semibold text-purple-400 mb-4">📤 Upload Image</h2>
         <button id="upload-btn"
@@ -37,19 +37,27 @@
       </div>
 
 
-      <!-- Ask Question Card -->
+
       <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20">
         <h2 class="text-xl font-semibold text-blue-400 mb-4">💬 Ask Question</h2>
         <textarea id="query-input" rows="4" placeholder="Enter your question about the image"
           class="w-full p-3 bg-gray-800 text-gray-300 rounded-lg shadow"></textarea>
+        <button id="set-reminder-btn" class="mt-2 px-3 py-1 bg-green-600 text-white rounded">⏰ Set Dosage
+          Reminder</button>
+        <button id="generate-quiz-btn" class="mt-4 bg-purple-700 text-white px-4 py-2 rounded">
+          🧪 Generate Quiz
+        </button>
+
+
         <div class="mt-4">
           <label for="explain-mode" class="text-sm text-gray-300 block mb-1">🧠 Explanation Style:</label>
           <select id="explain-mode" class="w-full p-2 bg-gray-800 text-white rounded">
             <option value="">Normal</option>
             <option value="eli5">👶 Explain Like I'm 5 (ELI5)</option>
-            <option value="doctor">👩‍⚕️ Explain Like a Doctor</option>
+            <option value="doctor">👩‍⚕️ Explain Like I'm a Doctor</option>
+            <option value="patient">👩‍⚕️ Explain Like I'm the patient</option>
             <option value="teacher">🧑‍🏫 Explain Like a Teacher</option>
-            <option value="student">🎓 Explain Like a Student</option>
+            <option value="student">🎓 Explain Like I'm a Student</option>
             <option value="support">💬 Explain Like Customer Support</option>
           </select>
         </div>
@@ -66,8 +74,17 @@
         </div>
       </div>
     </div>
+    <div id="reminder-modal"
+      class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-80 text-black">
+        <h3 class="text-lg font-bold mb-4">Set Dosage Reminder</h3>
+        <label class="block mb-2">Select time(s):</label>
+        <input type="time" class="mb-2 w-full" id="reminder-time">
+        <button id="confirm-reminder" class="bg-blue-600 text-white px-4 py-2 rounded mt-2">Confirm</button>
+      </div>
+    </div>
 
-    <!-- Voice Control Panel -->
+
     <div class="flex flex-wrap justify-center items-center gap-4 mb-8">
       <div>
         <label class="text-sm">🌐 Language:</label>
@@ -86,10 +103,19 @@
         </select>
       </div>
     </div>
+    <div class="mt-2 text-gray-200 text-sm">
+      <label class="mr-2">
+        <input type="radio" name="quiz-type" value="mcq" checked> MCQs
+      </label>
+      <label>
+        <input type="radio" name="quiz-type" value="flashcard"> Flashcards
+      </label>
+    </div>
 
-    <!-- Model Responses -->
+
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <!-- Llama Response -->
+
       <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20">
         <div class="flex justify-between items-center mb-2">
           <h2 class="text-xl font-semibold text-green-400">🤖 Llama-3.2-11b-vision Response</h2>
@@ -108,7 +134,7 @@
         </div>
       </div>
 
-      <!-- Llava Response -->
+
       <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg border border-white/20">
         <div class="flex justify-between items-center mb-2">
           <h2 class="text-xl font-semibold text-green-400">🤖 Llama-3.2-90b-vision Response</h2>
@@ -128,7 +154,7 @@
       </div>
     </div>
 
-    <!-- Save Chat + View -->
+
     <div class="mt-6 text-center">
 
       <button onclick="saveChat()" class="bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-6 rounded-lg font-semibold">
@@ -140,7 +166,7 @@
 
     </div>
 
-    <!-- Error Message -->
+
     <div id="error-container" class="hidden mt-8 p-4 bg-red-500 text-white rounded">
       <p id="error-text"></p>
     </div>
@@ -198,6 +224,44 @@
         alert("❌ Failed to load session chat history");
       }
     }
+    document.getElementById('generate-quiz-btn').addEventListener('click', async () => {
+      const image = imageUpload.files[0];
+      const quizType = document.querySelector('input[name="quiz-type"]:checked').value;
+
+      if (!image) return showError('⚠️ Please upload a document or image first');
+
+      const formData = new FormData();
+      formData.append('image', image);
+      formData.append('query', `Generate 5 ${quizType === 'mcq' ? 'multiple choice quiz questions' : 'flashcards'} from this.`);
+
+      try {
+        submitQuery.disabled = true;
+        submitQuery.textContent = 'Generating Quiz... 🧠';
+
+        const response = await fetch('/upload_and_query', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+        if (!response.ok || result.error) throw new Error(result.detail || result.error || 'Server error');
+
+        const quizHtml = marked.parse(result.llama || result.llava || 'No quiz generated');
+
+        const quizContainer = document.createElement('div');
+        quizContainer.classList.add('mt-4', 'bg-indigo-900', 'p-4', 'rounded', 'text-white');
+        quizContainer.innerHTML = `<h3 class="text-lg font-semibold mb-2">📝 Quiz Generated:</h3>${quizHtml}`;
+
+        document.getElementById('response-llama').appendChild(quizContainer);
+
+      } catch (err) {
+        showError('❌ Quiz generation failed: ' + err.message);
+      } finally {
+        submitQuery.disabled = false;
+        submitQuery.textContent = 'Submit Query';
+      }
+    });
+
 
 
     function vote(model) {
@@ -232,6 +296,49 @@
 
       alert("💾 Chat saved and downloaded as .txt file!");
     }
+    document.getElementById('set-reminder-btn').addEventListener('click', () => {
+      document.getElementById('reminder-modal').classList.remove('hidden');
+    });
+
+    document.getElementById('confirm-reminder').addEventListener('click', () => {
+      const time = document.getElementById('reminder-time').value;
+      if (!time) return alert("Please select a time!");
+
+      localStorage.setItem('med-reminder', time);
+
+      scheduleReminder(time);
+
+      document.getElementById('reminder-modal').classList.add('hidden');
+      alert("Reminder set for " + time);
+    });
+
+    function scheduleReminder(timeStr) {
+      const now = new Date();
+      const [h, m] = timeStr.split(":").map(Number);
+      const reminderTime = new Date();
+      reminderTime.setHours(h, m, 0, 0);
+
+      let delay = reminderTime - now;
+      if (delay < 0) delay += 24 * 60 * 60 * 1000; // next day
+
+      setTimeout(() => {
+
+        if (Notification.permission === "granted") {
+          new Notification("⏰ Medication Reminder", {
+            body: "Time to take your medicine 💊",
+            icon: "your-icon.png"
+          });
+        }
+
+        const msg = new SpeechSynthesisUtterance("It's time to take your medicine.");
+        window.speechSynthesis.speak(msg);
+      }, delay);
+    }
+
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+
 
     document.addEventListener('DOMContentLoaded', function () {
       const uploadBtn = document.getElementById('upload-btn');
@@ -287,13 +394,15 @@
         if (explainMode === 'eli5') {
           query += "\n\nPlease explain this as if I were a 5-year-old, using very simple language, emojis, and fun analogies.";
         } else if (explainMode === 'doctor') {
-          query += "\n\nPlease explain this like a medical doctor would explain to a patient.";
+          query += "\n\nPlease explain this to me like a Im a doctor";
         } else if (explainMode === 'teacher') {
           query += "\n\nPlease explain this like a school teacher would explain to a class.";
         } else if (explainMode === 'student') {
-          query += "\n\nPlease explain this as if you were a student giving a presentation.";
+          query += "\n\nPlease explain this to me as if Im a student.";
         } else if (explainMode === 'support') {
           query += "\n\nPlease explain this like a helpful customer support representative addressing a concern.";
+        } else if (explainMode === 'patient') {
+          query += "\n\nPlease explain this to me like Im the patient"
         }
 
         const formData = new FormData();
